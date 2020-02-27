@@ -1,0 +1,3 @@
+[submodule "polypane"]
+	path = polypane
+	url = ssh+git://aur@aur.archlinux.org/polypane.git
