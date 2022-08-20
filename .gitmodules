@@ -1,3 +1,6 @@
 [submodule "polypane"]
 	path = polypane
 	url = ssh+git://aur@aur.archlinux.org/polypane.git
+[submodule "tesla_auth"]
+	path = tesla_auth
+	url = ssh+git://aur@aur.archlinux.org/tesla_auth.git
