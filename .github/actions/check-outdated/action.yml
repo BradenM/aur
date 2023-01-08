@@ -1,0 +1,23 @@
+name: "Check Package Version"
+description: "Compare package versions with latest."
+author: "Braden Mars <bradenmars@bradenmars.me>"
+inputs:
+  token:
+    description: "Token for gh api."
+    required: true
+  repository:
+    description: "Upstream repository to compare latest release with."
+    required: true
+  package:
+    description: "Package to check."
+    required: true
+outputs:
+  current-version:
+    description: "Current package version."
+  latest-version:
+    description: "Latest package version."
+  outdated:
+    description: "'true' if outdated, 'false' otherwise."
+runs:
+  using: "docker"
+  image: "Dockerfile"
