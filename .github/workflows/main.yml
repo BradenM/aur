@@ -47,6 +47,10 @@ jobs:
     if: needs.check.outputs.outdated == 'true'
     container: archlinux
     steps:
+      - name: Setup deps
+        run: |
+          pacman -Syu --noconfirm --needed --overwrite='*' git sed pacman-contrib sudo openssh
+
       - name: Setup ssh
         run: |
           mkdir -p ~/.ssh
@@ -73,9 +77,6 @@ jobs:
         run: |
           echo "Current: ${CURRENT_VERSION}"
           echo "Latest: ${LATEST_VERSION}"
-          pacman -Sy --noconfirm
-          pacman -S --noconfirm --needed devtools pacman pacman-contrib sudo
-          id
           useradd github -M 
           passwd -d github
           printf 'github ALL=(ALL) ALL\n' | tee -a /etc/sudoers 
