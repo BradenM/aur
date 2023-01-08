@@ -15,12 +15,22 @@ jobs:
       latest-version: ${{ steps.outdated.outputs.latest-version }}
       outdated: ${{ steps.outdated.outputs.outdated }}
     steps:
+      - name: Setup ssh
+        run: |
+          mkdir -p ~/.ssh
+          echo -n "
+          Host aur.archlinux.org
+            IdentityFile ~/.ssh/aur
+            User aur
+          " >> ~/.ssh/config
+          ssh-keyscan -v -t "rsa,dsa,ecdsa,ed25519" aur.archlinux.org >>~/.ssh/known_hosts
+          echo "${{ secrets.AUR_SSH_KEY }}" > ~/.ssh/aur
+          chmod -vR 600 ~/.ssh/aur*
+          ssh-keygen -vy -f ~/.ssh/aur >~/.ssh/aur.pub
+
       - uses: actions/checkout@v3
         with:
           submodules: true
-          ssh-known-hosts: "aur.archlinux.org"
-          ssh-strict: "false"
-          ssh-key: ${{ secrets.AUR_SSH_KEY }}
 
       - name: Check polypane
         id: outdated
@@ -37,12 +47,22 @@ jobs:
     if: needs.check.outputs.outdated == 'true'
     container: archlinux
     steps:
+      - name: Setup ssh
+        run: |
+          mkdir -p ~/.ssh
+          echo -n "
+          Host aur.archlinux.org
+            IdentityFile ~/.ssh/aur
+            User aur
+          " >> ~/.ssh/config
+          ssh-keyscan -v -t "rsa,dsa,ecdsa,ed25519" aur.archlinux.org >>~/.ssh/known_hosts
+          echo "${{ secrets.AUR_SSH_KEY }}" > ~/.ssh/aur
+          chmod -vR 600 ~/.ssh/aur*
+          ssh-keygen -vy -f ~/.ssh/aur >~/.ssh/aur.pub
+
       - uses: actions/checkout@v3
         with:
           submodules: true
-          ssh-known-hosts: "aur.archlinux.org"
-          ssh-strict: "false"
-          ssh-key: ${{ secrets.AUR_SSH_KEY }}
 
       - name: Update
         # eventually extend to other packages
