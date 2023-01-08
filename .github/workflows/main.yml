@@ -1,0 +1,81 @@
+name: "Update packages."
+
+on:
+  workflow_dispatch:
+  push:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: Check outdated
+    outputs:
+      current-version: ${{ steps.outdated.outputs.current-version }}
+      latest-version: ${{ steps.outdated.outputs.latest-version }}
+      outdated: ${{ steps.outdated.outputs.outdated }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Check polypane
+        id: outdated
+        uses: ./.github/actions/check-outdated
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: firstversionist/polypane
+          package: polypane
+
+  update:
+    name: Update Package
+    runs-on: ubuntu-latest
+    needs: [check]
+    if: needs.check.outputs.outdated == 'true'
+    container: archlinux
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Update
+        # eventually extend to other packages
+        shell: bash
+        env:
+          CURRENT_VERSION: ${{ needs.check.outputs.current-version }}
+          LATEST_VERSION: ${{ needs.check.outputs.latest-version }}
+        run: |
+          echo "Current: ${CURRENT_VERSION}"
+          echo "Latest: ${LATEST_VERSION}"
+          pacman -Sy --noconfirm
+          pacman -S --noconfirm --needed devtools pacman pacman-contrib sudo
+          id
+          useradd github -M 
+          passwd -d github
+          printf 'github ALL=(ALL) ALL\n' | tee -a /etc/sudoers 
+          git config --global --add safe.directory ${PWD}/polypane
+          chown -R github polypane
+          cat polypane/PKGBUILD
+          sed -i "s/pkgver=${CURRENT_VERSION}/pkgver=${LATEST_VERSION}/g" polypane/PKGBUILD
+          sed -i -E "s/pkgrel=[0-9]/pkgrel=1/g" polypane/PKGBUILD
+          cat polypane/PKGBUILD
+          cd polypane
+          sudo -u github bash -c 'updpkgsums'
+          sudo -u github bash -c 'makepkg --printsrcinfo > .SRCINFO'
+          cat .SRCINFO
+          sudo -u github bash -c 'makepkg -scC --noconfirm'
+          git status
+          git --no-pager diff --patch
+          rm *.AppImage *.pkg.tar.zst || true
+
+      - name: Publish
+        uses: KSXGitHub/github-actions-deploy-aur@v2.6.0
+        with:
+          pkgname: polypane
+          pkgbuild: ./polypane/PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_KEY }}
+          commit_message: "chore(pkg): Bump to ${{ needs.check.outputs.latest-version }}"
+          allow_empty_commits: false
+          test: true
