@@ -77,7 +77,7 @@ jobs:
           cat polypane/PKGBUILD
 
       - name: Publish
-        uses: KSXGitHub/github-actions-deploy-aur@v2.7.1
+        uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
         with:
           pkgname: polypane
           pkgbuild: ./polypane/PKGBUILD
