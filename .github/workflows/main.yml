@@ -28,7 +28,7 @@ jobs:
           chmod -vR 600 ~/.ssh/aur*
           ssh-keygen -vy -f ~/.ssh/aur >~/.ssh/aur.pub
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -59,7 +59,7 @@ jobs:
           chmod -vR 600 ~/.ssh/aur*
           ssh-keygen -vy -f ~/.ssh/aur >~/.ssh/aur.pub
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
