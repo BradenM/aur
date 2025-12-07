@@ -1,0 +1,49 @@
+name: "Update submodules"
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Update packages."]
+    types: [completed]
+
+jobs:
+  sync:
+    name: Sync submodules
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Setup ssh
+        run: |
+          mkdir -p ~/.ssh
+          echo -n "
+          Host aur.archlinux.org
+            IdentityFile ~/.ssh/aur
+            User aur
+          " >> ~/.ssh/config
+          ssh-keyscan -v -t "rsa,dsa,ecdsa,ed25519" aur.archlinux.org >>~/.ssh/known_hosts
+          echo "${{ secrets.AUR_SSH_KEY }}" > ~/.ssh/aur
+          chmod -vR 600 ~/.ssh/aur*
+          ssh-keygen -vy -f ~/.ssh/aur >~/.ssh/aur.pub
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Update submodules
+        run: git submodule update --init --recursive --remote
+
+      - name: Commit changed submodules
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for submodule in $(git submodule --quiet foreach 'echo $name'); do
+            if ! git diff --quiet "$submodule"; then
+              version=$(git -C "$submodule" describe --tags --always 2>/dev/null || git -C "$submodule" rev-parse --short HEAD)
+              git add "$submodule"
+              git commit -m "chore($submodule): bump to $version"
+            fi
+          done
+
+      - name: Push
+        run: git push
