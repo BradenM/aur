@@ -25,9 +25,9 @@ jobs:
           chmod -vR 600 ~/.ssh/aur*
           ssh-keygen -vy -f ~/.ssh/aur >~/.ssh/aur.pub
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: false
 
       - name: Update submodules
         run: git submodule update --init --recursive --remote
